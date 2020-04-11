@@ -1,0 +1,4 @@
+*.pdf
+*.csv
+COVID-19/
+__pycache__/
