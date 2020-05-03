@@ -75,8 +75,10 @@ elif location in countries:   # Country
     rows = confirmed_data['Country/Region'] == location
     # print(rows)
     row = list(rows).index(True)
-    print("row =", row)
-    print(confirmed_data.loc[row][:2].tolist())
+    # need to do something special if more than one row
+    # print("row =", row)
+    # print(confirmed_data.loc[row][:2].tolist())
+
     # location1 = confirmed_data[location][:2].tolist()
     # print("location1:", location1)
     # print("last value:", confirmed_data.loc[row][-1].tolist())
@@ -98,6 +100,10 @@ else:
     print("Unknown location:", location)
     print("Abort")
     exit()
+
+print("for", location)
+print("latest daily DEATHS:", daily_deaths[-1], "total DEATHS:", cumul_deaths[-1])
+print("latest daily CASES:", daily_confirmed[-1], "total CASES:", cumul_confirmed[-1])
 
 # PLOT
 
