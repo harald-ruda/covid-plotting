@@ -54,8 +54,13 @@ if location in states:   # US State
     xvalues = dates
     cumul_confirmed = cases
     cumul_deaths = deaths
+
     daily_confirmed = (np.array(cases)[1:] - np.array(cases)[:-1])
     daily_confirmed = [0] + list(daily_confirmed)
+
+    daily_deaths = (np.array(deaths)[1:] - np.array(deaths)[:-1])
+    daily_deaths = [0] + list(daily_deaths)
+
     # print(np.array(cases).shape, np.array(cumul_confirmed).shape, np.array(cumul_deaths).shape, np.array(daily_confirmed).shape)
     xvalues = [x for x in range(len(daily_confirmed))]
 
@@ -85,6 +90,7 @@ elif location in countries:   # Country
 
     deaths = np.array(deaths_data.loc[row][4:].tolist())
     cumul_deaths = np.transpose(deaths[1:])
+    daily_deaths = np.transpose(deaths[1:] - deaths[:-1])
 
     xvalues = [x for x in range(len(daily_confirmed))]
 
@@ -100,9 +106,10 @@ font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal' }
 
 fig, ax = plt.subplots()
 
-ax.plot(cumul_confirmed, label='Cumulative Cases', color='b')
+# ax.plot(cumul_confirmed, label='Cumulative Cases', color='b')
 ax.bar(xvalues, daily_confirmed, label='Daily New Cases', width=0.4, color='c')
-ax.plot(cumul_deaths, label='Cumulative Deaths', color='r')
+# ax.plot(cumul_deaths, label='Cumulative Deaths', color='r')
+ax.plot(daily_deaths, label='Daily Deaths', color='r')
 
 ax.grid()
 ax.legend(title='Where:')
@@ -112,6 +119,6 @@ plt.title(location + ' COVID-19 Cases', fontdict=font)
 
 plt.subplots_adjust(left=0.15)
 
-fig.savefig(location + '-cases.pdf')
+# fig.savefig(location + '-cases.pdf')
 plt.show()
 
