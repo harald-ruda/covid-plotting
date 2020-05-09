@@ -73,28 +73,14 @@ elif location in countries:   # Country
     confirmed_data = pd.read_csv(DataLocation2 + ConfirmedFile)
     deaths_data = pd.read_csv(DataLocation2 + DeathsFile)
 
-    # location1 = confirmed_data.loc[row][:2].tolist()
     rows = confirmed_data['Country/Region'] == location
     # print(rows[rows == True].head())
     # print(list(rows[rows == True].index))
     row = list(rows[rows == True].index)
-    # row0 = row[0]
-    # rowN = row[-1]
     # print(row)
     if len(row) > 1:
-        states = confirmed_data['Province/State'][row].tolist()
-        print(row[-1], type(row[-1]))
-        print(states[-1], type(states[-1]))
-        print(states)
         states = [str(state) for state in confirmed_data['Province/State'][row].tolist() if not isinstance(state, float)]
         print(location, "includes:", ', '.join(states))
-    # print(*row)
-    # rowslice = slice(row[0], row[-1] + 1)
-    # print(rowslice)
-    # urow = *row
-    # print(urow)
-    # row = list(rows).index(True)
-    # need to do something special if more than one row
     # print("row =", row)
     # print(confirmed_data.loc[row][:2].tolist())
 
