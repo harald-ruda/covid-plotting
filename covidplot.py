@@ -1,7 +1,7 @@
 
 # IMPORTS
 
-import sys
+import sys, math
 
 import numpy as np
 import pandas as pd
@@ -35,6 +35,7 @@ DeathsFile = 'time_series_covid19_deaths_global.csv'
 # COMMAND LINE
 
 location = sys.argv[-1] if len(sys.argv) > 1 else 'Massachusetts'
+lastday = ""
 
 # DATA
 
@@ -50,6 +51,7 @@ if location in states:   # US State
     deaths = df[rows]['deaths'].tolist()
     cases = df[rows]['cases'].tolist()
     dates = df[rows]['date'].tolist()
+    lastday = dates[-1]
 
     xvalues = dates
     cumul_confirmed = cases
@@ -73,8 +75,25 @@ elif location in countries:   # Country
 
     # location1 = confirmed_data.loc[row][:2].tolist()
     rows = confirmed_data['Country/Region'] == location
-    # print(rows)
-    row = list(rows).index(True)
+    # print(rows[rows == True].head())
+    # print(list(rows[rows == True].index))
+    row = list(rows[rows == True].index)
+    # row0 = row[0]
+    # rowN = row[-1]
+    # print(row)
+    if len(row) > 1:
+        states = confirmed_data['Province/State'][row].tolist()
+        print(row[-1], type(row[-1]))
+        print(states[-1], type(states[-1]))
+        print(states)
+        states = [str(state) for state in confirmed_data['Province/State'][row].tolist() if not isinstance(state, float)]
+        print(location, "includes:", ', '.join(states))
+    # print(*row)
+    # rowslice = slice(row[0], row[-1] + 1)
+    # print(rowslice)
+    # urow = *row
+    # print(urow)
+    # row = list(rows).index(True)
     # need to do something special if more than one row
     # print("row =", row)
     # print(confirmed_data.loc[row][:2].tolist())
@@ -82,26 +101,30 @@ elif location in countries:   # Country
     # location1 = confirmed_data[location][:2].tolist()
     # print("location1:", location1)
     # print("last value:", confirmed_data.loc[row][-1].tolist())
+    # print(confirmed_data.iloc[row0:rowN][4:].sum())
+    # print(confirmed_data.iloc[92:95, 4:].sum())   # works
+    # print(confirmed_data.iloc[row, 4:].sum())  # works
 
-    confirmed = np.array(confirmed_data.loc[row][4:].tolist())
+    confirmed = np.array(confirmed_data.iloc[row, 4:].sum().tolist())
     cumul_confirmed = np.transpose(confirmed[1:])
     daily_confirmed = np.transpose(confirmed[1:] - confirmed[:-1])
 
     # recovered = np.array(recovered_data.loc[row][4:].tolist())
     # cumul_recovered = np.transpose(recovered[1:])
 
-    deaths = np.array(deaths_data.loc[row][4:].tolist())
+    deaths = np.array(deaths_data.iloc[row, 4:].sum().tolist())
     cumul_deaths = np.transpose(deaths[1:])
     daily_deaths = np.transpose(deaths[1:] - deaths[:-1])
 
     xvalues = [x for x in range(len(daily_confirmed))]
+    lastday = deaths_data.loc[row[0]][4:].index.tolist()[-1]
 
 else:
     print("Unknown location:", location)
     print("Abort")
     exit()
 
-print("for", location)
+print("for", location, "as of", lastday)
 print("latest daily DEATHS:", daily_deaths[-1], "total DEATHS:", cumul_deaths[-1])
 print("latest daily CASES:", daily_confirmed[-1], "total CASES:", cumul_confirmed[-1])
 
