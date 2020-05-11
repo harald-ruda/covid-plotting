@@ -32,10 +32,15 @@ DeathsFile = 'time_series_covid19_deaths_global.csv'
 # DeathsFile = 'time_series_19-covid-Deaths.csv'
 
 
+LocationExceptions = { 'Russia': 'Russian Federation' }
+
 # COMMAND LINE
 
 location = sys.argv[-1] if len(sys.argv) > 1 else 'Massachusetts'
 lastday = ""
+
+if location in LocationExceptions.keys():
+    location = LocationExceptions[location]
 
 # DATA
 
@@ -68,7 +73,12 @@ if location in states:   # US State
 
 elif location in countries:   # Country
 
+    # print(location, "=", countries.get(location))
     location = countries.get(location).name
+
+    CountryExceptions = { 'United States of America': 'US', 'Russian Federation': 'Russia' }
+    if location in CountryExceptions.keys():
+        location = CountryExceptions[location]
 
     confirmed_data = pd.read_csv(DataLocation2 + ConfirmedFile)
     deaths_data = pd.read_csv(DataLocation2 + DeathsFile)
@@ -77,6 +87,10 @@ elif location in countries:   # Country
     # print(rows[rows == True].head())
     # print(list(rows[rows == True].index))
     row = list(rows[rows == True].index)
+    if len(row) == 0:
+        print("Please add", location, "to <CountryExceptions>. for looking up the data coreectly.")
+        print("Please choose from: ", confirmed_data['Country/Region'].tolist())
+
     # print(row)
     if len(row) > 1:
         states = [str(state) for state in confirmed_data['Province/State'][row].tolist() if not isinstance(state, float)]
@@ -106,8 +120,12 @@ elif location in countries:   # Country
     lastday = deaths_data.loc[row[0]][4:].index.tolist()[-1]
 
 else:
-    print("Unknown location:", location)
+    print("Unknown location:", location, ". Please add to <LocationExceptions>.")
     print("Abort")
+    # print("states:", states)
+    print("choose one of these countries:")
+    for c in countries:
+        print("  ", c)
     exit()
 
 print("for", location, "as of", lastday)
@@ -124,7 +142,8 @@ fig, ax = plt.subplots()
 # ax.plot(cumul_confirmed, label='Cumulative Cases', color='b')
 ax.bar(xvalues, daily_confirmed, label='Daily New Cases', width=0.4, color='c')
 # ax.plot(cumul_deaths, label='Cumulative Deaths', color='r')
-ax.plot(daily_deaths, label='Daily Deaths', color='r')
+ax.bar(xvalues, daily_deaths, label='Daily Deaths', width = 0.8, color='r')
+# ax.plot(daily_deaths, label='Daily Deaths', color='r')
 
 ax.grid()
 ax.legend(title='Where:')
