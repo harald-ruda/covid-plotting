@@ -32,7 +32,14 @@ DeathsFile = 'time_series_covid19_deaths_global.csv'
 # DeathsFile = 'time_series_19-covid-Deaths.csv'
 
 
-LocationExceptions = { 'Russia': 'Russian Federation' }
+LocationExceptions = { 'Russia': 'Russian Federation', 
+                       'Korea': 'Korea, Republic of',
+                       'SKorea': 'Korea, Republic of',
+                       'SouthKorea': 'Korea, Republic of',
+                       'South-Korea': 'Korea, Republic of',
+                       'South Korea': 'Korea, Republic of',
+                       'Iran': 'Iran, Islamic Republic of',
+                     }
 
 # COMMAND LINE
 
@@ -76,7 +83,17 @@ elif location in countries:   # Country
     # print(location, "=", countries.get(location))
     location = countries.get(location).name
 
-    CountryExceptions = { 'United States of America': 'US', 'Russian Federation': 'Russia' }
+    NoDataExceptions = [ "Korea, Democratic People's Republic of" ]
+    if location in NoDataExceptions:
+        print("No data available for:", location)
+        exit()
+
+    CountryExceptions = { 'United States of America': 'US', 
+                          'Russian Federation': 'Russia',
+                          'Korea, Republic of': 'Korea, South',
+                          'Taiwan, Province of China': 'Taiwan*', 
+                          'Iran, Islamic Republic of': 'Iran',
+                        }
     if location in CountryExceptions.keys():
         location = CountryExceptions[location]
 
@@ -120,6 +137,7 @@ elif location in countries:   # Country
     lastday = deaths_data.loc[row[0]][4:].index.tolist()[-1]
 
 else:
+
     print("Unknown location:", location, ". Please add to <LocationExceptions>.")
     print("Abort")
     # print("states:", states)
