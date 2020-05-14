@@ -1,0 +1,15 @@
+
+- test on all countries, states, etc. to find all exceptions
+- clean up code
+
+plot
+- skip beginning
+- show dates/months on x axis
+- 7-day averages, plot curves
+
+query-demo.website/covid:
+- create
+- add flask code
+- all the set up
+- copy much from economist
+
