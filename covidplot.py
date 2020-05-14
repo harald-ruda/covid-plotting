@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 
 # https://stackoverflow.com/questions/41245330/check-if-a-country-entered-is-one-of-the-countries-of-the-world
 
-from iso3166 import countries
-from us_states import states
+from iso3166 import countries as Countries
+from us_states import states as States
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -78,16 +78,18 @@ CountryExceptions = { 'United States of America': 'US',
 def get_data(parameters):
     """
     """
-    global states, countries
+    global States, Countries
 
     location = parameters[LOCATION]
 
     if location in LocationExceptions.keys():
         location = LocationExceptions[location]
 
-    if location in states:   # US State
+    if location in States:   # US States
 
-        location = states[location]['name']
+        state = States[location]
+        location = state['name']
+        alternatives = [ state['abbreviation'] ]
 
         df = pd.read_csv(DataLocation1 + StateFile)
         rows = df['state'] == location
@@ -109,15 +111,18 @@ def get_data(parameters):
 
         xvalues = [x for x in range(len(daily_confirmed))]
 
-    elif location in countries:   # Country
+    elif location in Countries:   # Country
 
-        location = countries.get(location).name
+        country = Countries.get(location)
+        location = country.name
+        alternatives = [ country.alpha2, country.alpha3 ]   # numeric, apolitical
 
         if location in NoDataExceptions:
             print("No data available for:", location)
             return None, None, None
 
         if location in CountryExceptions.keys():
+            alternatives.insert(0, location)
             location = CountryExceptions[location]
 
         confirmed_data = pd.read_csv(DataLocation2 + ConfirmedFile)
@@ -149,19 +154,12 @@ def get_data(parameters):
         print("Unknown location:", location, ". Please add to <LocationExceptions>.")
         print("Abort")
 
-        # print("states:")
-        # for s in states:
-        #     print("  ", s)
-
-        # print("choose one of these countries:")
-        # for c in countries:
-        #     print("  ", c)
-
         return None, None, None
 
     parameters[LOCATION] = location
+    alternatives = '(' + ', '.join(alternatives) + ')'
 
-    print("for", location, "as of", lastday)
+    print("for", location, alternatives, "as of", lastday)
     print("latest daily DEATHS:", daily_deaths[-1], "total DEATHS:", cumul_deaths[-1])
     print("latest daily CASES:", daily_confirmed[-1], "total CASES:", cumul_confirmed[-1])
 
@@ -235,7 +233,6 @@ def process_arguments(argv):
 if __name__ == "__main__":
 
     parameters = process_arguments(sys.argv[1:])
-    print(parameters)
     cases, deaths, xvalues = get_data(parameters)
     if not(cases is None):
         plot_data(cases, deaths, xvalues, parameters)
