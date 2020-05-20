@@ -31,7 +31,7 @@ INFO = 'info'
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# DATA SOURCES
+# DATA SOURCES - always get the latest available data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -81,6 +81,10 @@ def get_data(parameters):
     global States, Countries
 
     location = parameters[LOCATION]
+
+    # confirmed_data = pd.read_csv(DataLocation2 + ConfirmedFile)
+    # deaths_data = pd.read_csv(DataLocation2 + DeathsFile)
+    # print("Please choose from: ", confirmed_data['Country/Region'].tolist())
 
     if location in LocationExceptions.keys():
         location = LocationExceptions[location]
@@ -132,7 +136,8 @@ def get_data(parameters):
         row = list(rows[rows == True].index)
         if len(row) == 0:
             print("Please add", location, "to <CountryExceptions>. for looking up the data coreectly.")
-            print("Please choose from: ", confirmed_data['Country/Region'].tolist())
+            # print("Please choose from: ", confirmed_data['Country/Region'].tolist())
+            return None, None, None
 
         if len(row) > 1:
             states = [str(state) for state in confirmed_data['Province/State'][row].tolist() if not isinstance(state, float)]
@@ -147,7 +152,9 @@ def get_data(parameters):
         daily_deaths = np.transpose(deaths[1:] - deaths[:-1])
 
         xvalues = [x for x in range(len(daily_confirmed))]
-        lastday = deaths_data.loc[row[0]][4:].index.tolist()[-1]
+        days = deaths_data.loc[row[0]][4:].index.tolist()
+        lastday = "" if len(days) == 0 else days[-1]
+        # lastday = deaths_data.loc[row[0]][4:].index.tolist()[-1]
 
     else:
 
@@ -159,9 +166,10 @@ def get_data(parameters):
     parameters[LOCATION] = location
     alternatives = '(' + ', '.join(alternatives) + ')'
 
-    print("for", location, alternatives, "as of", lastday)
-    print("latest daily DEATHS:", daily_deaths[-1], "total DEATHS:", cumul_deaths[-1])
-    print("latest daily CASES:", daily_confirmed[-1], "total CASES:", cumul_confirmed[-1])
+    if True:
+        print("for", location, alternatives, "as of", lastday)
+        print("latest daily DEATHS:", daily_deaths[-1], "total DEATHS:", cumul_deaths[-1])
+        print("latest daily CASES:", daily_confirmed[-1], "total CASES:", cumul_confirmed[-1])
 
     return daily_confirmed, daily_deaths, xvalues
 
@@ -226,12 +234,38 @@ def process_arguments(argv):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# TESTING
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+def testing():
+    """
+    """
+    # print("Please choose from: ", confirmed_data['Country/Region'].tolist())
+    names = ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Australia', 'Australia', 'Australia', 'Australia', 'Australia', 'Australia', 'Australia', 'Austria', 'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Benin', 'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Cabo Verde', 'Cambodia', 'Cameroon', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Central African Republic', 'Chad', 'Chile', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'Colombia', 'Congo (Brazzaville)', 'Congo (Kinshasa)', 'Costa Rica', "Cote d'Ivoire", 'Croatia', 'Diamond Princess', 'Cuba', 'Cyprus', 'Czechia', 'Denmark', 'Denmark', 'Denmark', 'Djibouti', 'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France', 'France', 'France', 'France', 'France', 'France', 'France', 'France', 'France', 'France', 'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Guatemala', 'Guinea', 'Guyana', 'Haiti', 'Holy See', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Korea, South', 'Kuwait', 'Kyrgyzstan', 'Latvia', 'Lebanon', 'Liberia', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar', 'Malaysia', 'Maldives', 'Malta', 'Mauritania', 'Mauritius', 'Mexico', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Namibia', 'Nepal', 'Netherlands', 'Netherlands', 'Netherlands', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Macedonia', 'Norway', 'Oman', 'Pakistan', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Rwanda', 'Saint Lucia', 'Saint Vincent and the Grenadines', 'San Marino', 'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Singapore', 'Slovakia', 'Slovenia', 'Somalia', 'South Africa', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Taiwan*', 'Tanzania', 'Thailand', 'Togo', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'Uruguay', 'US', 'Uzbekistan', 'Venezuela', 'Vietnam', 'Zambia', 'Zimbabwe', 'Canada', 'Dominica', 'Grenada', 'Mozambique', 'Syria', 'Timor-Leste', 'Belize', 'Canada', 'Laos', 'Libya', 'West Bank and Gaza', 'Guinea-Bissau', 'Mali', 'Saint Kitts and Nevis', 'Canada', 'Canada', 'Kosovo', 'Burma', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'MS Zaandam', 'Botswana', 'Burundi', 'Sierra Leone', 'Netherlands', 'Malawi', 'United Kingdom', 'France', 'South Sudan', 'Western Sahara', 'Sao Tome and Principe', 'Yemen', 'Comoros', 'Tajikistan']
+    for n in names:
+        get_data({LOCATION:n})
+
+    return
+
+    # Country(name='Zimbabwe', alpha2='ZW', alpha3='ZWE', numeric='716', apolitical_name='Zimbabwe')
+    for c in Countries:
+        names = [ c.name, c.alpha2, c.alpha3, c.numeric, c.apolitical_name ]
+        if c.name != c.apolitical_name:
+            print(c.name, c.apolitical_name)
+        for n in names:
+            get_data({LOCATION:n})
+        
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # MAIN
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
 if __name__ == "__main__":
 
+    # testing()
+    # exit()
     parameters = process_arguments(sys.argv[1:])
     cases, deaths, xvalues = get_data(parameters)
     if not(cases is None):
