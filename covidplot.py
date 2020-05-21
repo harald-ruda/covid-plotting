@@ -66,13 +66,13 @@ DeathsFile = 'time_series_covid19_deaths_global.csv'
 
 # common name -> name in data-file
 
-LocationExceptions = { 'Russia': 'Russian Federation', 
+LocationExceptions = { 'UK': 'United Kingdom',
                        'Korea': 'Korea, South',
                        'SKorea': 'Korea, South',
                        'SouthKorea': 'Korea, South',
                        'South-Korea': 'Korea, South',
                        'South Korea': 'Korea, South',
-                       'Iran': 'Iran, Islamic Republic of',
+                       'Zaandam': 'MS Zandaam', 
                      }
 
 
@@ -80,13 +80,55 @@ LocationExceptions = { 'Russia': 'Russian Federation',
 
 CountryExceptions = { 'United States of America': 'US', 
                       'Russian Federation': 'Russia',
-                      'Korea, Republic of': 'Korea, South',
                       'Taiwan, Province of China': 'Taiwan*', 
                       'Iran, Islamic Republic of': 'Iran',
+                      'Bolivia, Plurinational State of': 'Bolivia', 
+                      'Brunei Darussalam': 'Brunei', 
+                      'Myanmar': 'Burma', 
+                      'Congo': 'Congo (Brazzaville)', 
+                      'Congo, Democratic Republic of the': 'Congo (Kinshasa)', 
+                      "Côte d'Ivoire": "Cote d'Ivoire", 
+                      'Iran, Islamic Republic of': 'Iran', 
+                      'Korea, Republic of': 'Korea, South', 
+                      "Lao People's Democratic Republic": 'Laos', 
+                      'Moldova, Republic of': 'Moldova', 
+                      'Russian Federation': 'Russia', 
+                      'Syrian Arab Republic': 'Syria', 
+                      'Taiwan, Province of China': 'Taiwan*', 
+                      'Tanzania, United Republic of': 'Tanzania', 
+                      'United Kingdom of Great Britain and Northern Ireland': 'United Kingdom', 
+                      'Venezuela, Bolivarian Republic of': 'Venezuela', 
+                      'Viet Nam': 'Vietnam', 
+                      'Palestine, State of': 'West Bank and Gaza', 
                     }
+
+# these names in data-file are not in the country names
+
+"""
+Bolivia -> Bolivia, Plurinational State of
+Brunei -> Brunei Darussalam
+Burma -> Myanmar
+Congo (Brazzaville) -> Congo -> Congo, Republic of the -> Congo Republic -> RotC -> Congo-Brazzaville
+Congo (Kinshasa) -> Congo, Democratic Republic of the -> DR Congo -> DRC -> DROC -> Congo-Kinshasa
+Cote d'Ivoire -> Côte d'Ivoire
+Iran -> Iran, Islamic Republic of
+Korea, South -> Korea, Republic of
+Laos -> Lao People's Democratic Republic
+MS Zaandam -> Zaandam
+Moldova -> Moldova, Republic of
+Russia -> Russian Federation
+Syria -> Syrian Arab Republic
+Taiwan* -> Taiwan, Province of China -> Taiwan
+Tanzania -> Tanzania, United Republic of
+United Kingdom -> United Kingdom of Great Britain and Northern Ireland
+Venezuela -> Venezuela, Bolivarian Republic of
+Vietnam -> Viet Nam
+West Bank and Gaza -> Palestine, State of
+"""
 
 
 PlotExceptions = { 'Korea, South': 'South Korea',
+                   'Taiwan*': 'Taiwan',
                  }
 
 
@@ -128,7 +170,6 @@ def get_data(parameters):
 
         global_cases = pd.read_csv(GlobalDataLocation + ConfirmedFile)
         global_deaths = pd.read_csv(GlobalDataLocation + DeathsFile)
-
         country_list = global_deaths[COUNTRY_REGION].tolist()
         province_list = global_deaths[PROVINCE_STATE].tolist()
 
@@ -144,23 +185,25 @@ def get_data(parameters):
 
         elif location in Countries:
 
-            print("Country:", location)
+            # print("Country:", location)
             country = Countries.get(location)
+            alternatives = [ location, country.name, country.alpha2, country.alpha3 ]   # there is also: numeric, apolitical
             location = country.name
-            alternatives = [ country.alpha2, country.alpha3 ]   # there is also: numeric, apolitical
 
             if location in CountryExceptions.keys():
                 location = CountryExceptions[location]
 
-            if location not in country_list:
+            if location in country_list:
+                column = COUNTRY_REGION
+            elif location in province_list:
+                column = PROVINCE_STATE
+            else:
                 print("No data available for:", location, "May need to add to CountryExceptions.")
                 return None, None, None
 
-            column = COUNTRY_REGION
-
         elif location in LocationExceptions.keys():
 
-            print("LocationException:", location)
+            # print("LocationException:", location)
             location = LocationExceptions[location]
             column = COUNTRY_REGION
 
@@ -170,13 +213,16 @@ def get_data(parameters):
             print("Abort")
             return None, None, None
 
+        if len(alternatives) == 0 and location in Countries:
+            country = Countries.get(location)
+            alternatives = [ location, country.name, country.alpha2, country.alpha3 ]   # there is also: numeric, apolitical
+
         # now finally get the data for the location!
 
         matching_rows = global_cases[column] == location
         row = list(matching_rows[matching_rows == True].index)
         if len(row) == 0:
             print("Please add", location, "to <CountryExceptions>. for looking up the data coreectly.")
-            # print("Please choose from: ", confirmed_data['Country/Region'].tolist())
             return None, None, None
 
         if len(row) > 1 and column == COUNTRY_REGION:
@@ -198,8 +244,11 @@ def get_data(parameters):
 
     # by now we have: location, alternatives, daily_cases, daily_deaths, xvalues, cumul_deaths, cumul_cases
 
-    parameters[LOCATION] = location
+    alternatives = [item for item in alternatives if item != location]
     alternatives = '(' + ', '.join(alternatives) + ')' if len(alternatives) > 0 else ''
+    if False and len(alternatives) == 0:
+        print(parameters[LOCATION], '->', location, '->', PlotExceptions[location] if location in PlotExceptions.keys() else location, "|", alternatives, cumul_deaths[-1], "dead")
+    parameters[LOCATION] = location
 
     if True:
         print("for", location, alternatives, "as of", lastday)
@@ -281,19 +330,33 @@ def process_arguments(argv):
 def testing():
     """
     """
+    global_cases = pd.read_csv(GlobalDataLocation + ConfirmedFile)
+    global_deaths = pd.read_csv(GlobalDataLocation + DeathsFile)
+
+    country_list = global_deaths[COUNTRY_REGION].tolist()
+    province_list = global_deaths[PROVINCE_STATE].tolist()
+
+    # print()
+    # print("country-list:", sorted(list(set(country_list))))
+    # print()
+    # print("province-list:", sorted(list(set([p for p in province_list if not isinstance(p, float)]))))
+    # print()
+
     # print("Please choose from: ", confirmed_data['Country/Region'].tolist())
-    names = ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Australia', 'Australia', 'Australia', 'Australia', 'Australia', 'Australia', 'Australia', 'Austria', 'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Benin', 'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Cabo Verde', 'Cambodia', 'Cameroon', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Canada', 'Central African Republic', 'Chad', 'Chile', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'China', 'Colombia', 'Congo (Brazzaville)', 'Congo (Kinshasa)', 'Costa Rica', "Cote d'Ivoire", 'Croatia', 'Diamond Princess', 'Cuba', 'Cyprus', 'Czechia', 'Denmark', 'Denmark', 'Denmark', 'Djibouti', 'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France', 'France', 'France', 'France', 'France', 'France', 'France', 'France', 'France', 'France', 'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Guatemala', 'Guinea', 'Guyana', 'Haiti', 'Holy See', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Korea, South', 'Kuwait', 'Kyrgyzstan', 'Latvia', 'Lebanon', 'Liberia', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar', 'Malaysia', 'Maldives', 'Malta', 'Mauritania', 'Mauritius', 'Mexico', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Namibia', 'Nepal', 'Netherlands', 'Netherlands', 'Netherlands', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Macedonia', 'Norway', 'Oman', 'Pakistan', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Rwanda', 'Saint Lucia', 'Saint Vincent and the Grenadines', 'San Marino', 'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Singapore', 'Slovakia', 'Slovenia', 'Somalia', 'South Africa', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Taiwan*', 'Tanzania', 'Thailand', 'Togo', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'Uruguay', 'US', 'Uzbekistan', 'Venezuela', 'Vietnam', 'Zambia', 'Zimbabwe', 'Canada', 'Dominica', 'Grenada', 'Mozambique', 'Syria', 'Timor-Leste', 'Belize', 'Canada', 'Laos', 'Libya', 'West Bank and Gaza', 'Guinea-Bissau', 'Mali', 'Saint Kitts and Nevis', 'Canada', 'Canada', 'Kosovo', 'Burma', 'United Kingdom', 'United Kingdom', 'United Kingdom', 'MS Zaandam', 'Botswana', 'Burundi', 'Sierra Leone', 'Netherlands', 'Malawi', 'United Kingdom', 'France', 'South Sudan', 'Western Sahara', 'Sao Tome and Principe', 'Yemen', 'Comoros', 'Tajikistan']
+    names = country_list
+    names = sorted(list(set(names)))
     for n in names:
         get_data({LOCATION:n})
-
+   
     return
 
     # Country(name='Zimbabwe', alpha2='ZW', alpha3='ZWE', numeric='716', apolitical_name='Zimbabwe')
     for c in Countries:
+        # print()
         names = [ c.name, c.alpha2, c.alpha3, c.numeric, c.apolitical_name ]
         if c.name != c.apolitical_name:
             print(c.name, c.apolitical_name)
-        for n in names:
+        for n in names[:1]:
             get_data({LOCATION:n})
         
 
@@ -306,6 +369,7 @@ if __name__ == "__main__":
 
     # testing()
     # exit()
+
     parameters = process_arguments(sys.argv[1:])
     cases, deaths, xvalues = get_data(parameters)
     if not(cases is None):
