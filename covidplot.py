@@ -263,11 +263,23 @@ def get_data(parameters):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
+def rolling_mean(x, N):
+    # from https://stackoverflow.com/questions/13728392/moving-average-or-running-mean
+    sum = np.cumsum(np.insert([float(value) for value in x], 0, [0.0] * N)) 
+    return (sum[N:] - sum[:-N]) / float(N)
+
+
 def plot_data(cases, deaths, xvalues, parameters):
     """
     """
-    location = parameters[LOCATION]
+    rolling_window = 7
+    rolling_cases = rolling_mean(cases, rolling_window)
+    rolling_deaths = rolling_mean(deaths, rolling_window)
 
+    cases = [max(0, value) for value in cases]
+    deaths = [max(0, value) for value in deaths]
+
+    location = parameters[LOCATION]
     if location in PlotExceptions.keys():
         location = PlotExceptions[location]
 
@@ -281,8 +293,8 @@ def plot_data(cases, deaths, xvalues, parameters):
 
     ax.bar(xvalues, cases, label='Daily Cases', width=0.5, color='c')
     ax.bar(xvalues, deaths, label='Daily Deaths', width=0.5, color='r')
-
-    # ax.plot(daily_deaths, label='Daily Deaths', color='r')
+    ax.plot(rolling_cases, label=str(rolling_window) + '-Day Cases Rolling Average', color='c')
+    ax.plot(rolling_deaths, label=str(rolling_window) + '-Day Deaths Rolling Average', color='r')
 
     ax.grid()
     ax.legend(title='Where:')
