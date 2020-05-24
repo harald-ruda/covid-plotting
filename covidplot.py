@@ -36,6 +36,7 @@ STATE = 'state'
 DEATHS = 'deaths'
 CASES = 'cases'
 DATE = 'date'
+LASTDAY = 'last-day'
 
 COUNTRY_REGION = 'Country/Region'
 PROVINCE_STATE = 'Province/State'
@@ -160,11 +161,18 @@ def get_data(parameters):
         cumul_deaths = df[rows][DEATHS].tolist()
         cumul_cases = df[rows][CASES].tolist()
         dates = df[rows][DATE].tolist()
-        lastday = dates[-1]
+        parameters[LASTDAY] = lastday = dates[-1]
+
+        # print(dates[29], np.where(np.array(dates) >= '2020-03-01'))
+        since_March_1 =  np.where(np.array(dates) >= '2020-03-01')
+        cumul_deaths = np.array(cumul_deaths)[since_March_1]
+        cumul_cases = np.array(cumul_cases)[since_March_1]
+        dates = np.array(dates)[since_March_1]
 
         daily_cases = [0] + list(np.array(cumul_cases)[1:] - np.array(cumul_cases)[:-1])
         daily_deaths = [0] + list(np.array(cumul_deaths)[1:] - np.array(cumul_deaths)[:-1])
-        xvalues = [x for x in range(len(daily_deaths))]
+        # xvalues = [x for x in range(len(daily_deaths))]
+        xvalues = [x for x in range(- len(daily_deaths) + 1, 1)]
 
     else:   # Country or Province or Region outside of US
 
@@ -237,9 +245,10 @@ def get_data(parameters):
         cumul_deaths = np.transpose(deaths[1:])
         daily_deaths = np.transpose(deaths[1:] - deaths[:-1])
 
-        xvalues = [x for x in range(len(daily_cases))]
+        # xvalues = [x for x in range(len(daily_cases))]
+        xvalues = [x for x in range(- len(daily_deaths) + 1, 1)]
         days = global_deaths.loc[row[0]][4:].index.tolist()
-        lastday = "" if len(days) == 0 else days[-1]
+        parameters[LASTDAY] = lastday = "Yesterday" if len(days) == 0 else days[-1]
         # lastday = deaths_data.loc[row[0]][4:].index.tolist()[-1]
 
     # by now we have: location, alternatives, daily_cases, daily_deaths, xvalues, cumul_deaths, cumul_cases
@@ -288,18 +297,20 @@ def plot_data(cases, deaths, xvalues, parameters):
 
     if parameters[XKCD]:
         plt.xkcd()
+        # font['family'] = 'humor sans'
+        font.pop('family', None)
 
     fig, ax = plt.subplots()
 
     ax.bar(xvalues, cases, label='Daily Cases', width=0.5, color='c')
     ax.bar(xvalues, deaths, label='Daily Deaths', width=0.5, color='r')
-    ax.plot(rolling_cases, label=str(rolling_window) + '-Day Cases Rolling Average', color='c')
-    ax.plot(rolling_deaths, label=str(rolling_window) + '-Day Deaths Rolling Average', color='r')
+    ax.plot(xvalues, rolling_cases, label=str(rolling_window) + '-Day Cases Rolling Average', color='c')
+    ax.plot(xvalues, rolling_deaths, label=str(rolling_window) + '-Day Deaths Rolling Average', color='r')
 
     ax.grid()
     ax.legend(title='Where:')
     plt.ylabel('Number of Cases', fontdict=font)
-    plt.xlabel('Days Since Jan 21st', fontdict=font)
+    plt.xlabel('Days Before Yesterday', fontdict=font)
     plt.title(location + ' COVID-19 Cases', fontdict=font)
     plt.subplots_adjust(left=0.15)
 

@@ -1,6 +1,6 @@
 
 plot
-- skip beginning
+- skip beginning, option to show Feb, Jan
 - show dates/months on x axis
 
 query-demo.website/covid:
