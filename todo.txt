@@ -1,7 +1,6 @@
 
 plot
-- skip beginning, option to show Feb, Jan
-- show dates/months on x axis
+- select when to start curves (default now is Ides of March)
 
 query-demo.website/covid:
 - create
