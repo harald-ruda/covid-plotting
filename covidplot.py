@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 from iso3166 import countries as Countries
 from us_states import states as States
+from datetime import datetime
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -166,13 +167,12 @@ def get_data(parameters):
         cumul_deaths = df[rows][DEATHS].tolist()
         cumul_cases = df[rows][CASES].tolist()
         dates = df[rows][DATE].tolist()
-        parameters[LASTDAY] = lastday = dates[-1]
+        parameters[LASTDAY] = dates[-1]
 
-        since_March_15 =  np.where(np.array(dates) >= '2020-03-15')
-        cumul_deaths = np.array(cumul_deaths)[since_March_15]
-        cumul_cases = np.array(cumul_cases)[since_March_15]
-        dates = np.array(dates)[since_March_15]
-        print('starting at', dates[0])
+        since_startdate =  np.where(np.array(dates) >= startdate)
+        cumul_deaths = np.array(cumul_deaths)[since_startdate]
+        cumul_cases = np.array(cumul_cases)[since_startdate]
+        dates = np.array(dates)[since_startdate]
 
         daily_cases = [0] + list(np.array(cumul_cases)[1:] - np.array(cumul_cases)[:-1])
         daily_deaths = [0] + list(np.array(cumul_deaths)[1:] - np.array(cumul_deaths)[:-1])
@@ -184,7 +184,6 @@ def get_data(parameters):
         global_deaths = pd.read_csv(GlobalDataLocation + DeathsFile)
         country_list = global_deaths[COUNTRY_REGION].tolist()
         province_list = global_deaths[PROVINCE_STATE].tolist()
-
         alternatives = []
 
         if location in country_list:
@@ -243,17 +242,20 @@ def get_data(parameters):
 
         cases = np.array(global_cases.iloc[row, 4:].sum().tolist())
         cumul_cases = np.transpose(cases[1:])
-        daily_cases = np.transpose(cases[1:] - cases[:-1])
+        daily_cases = [0] + list(np.transpose(cases[1:] - cases[:-1]))
 
         deaths = np.array(global_deaths.iloc[row, 4:].sum().tolist())
         cumul_deaths = np.transpose(deaths[1:])
-        daily_deaths = np.transpose(deaths[1:] - deaths[:-1])
+        daily_deaths = [0] + list(np.transpose(deaths[1:] - deaths[:-1]))
 
-        # xvalues = [x for x in range(len(daily_cases))]
+        dates = global_deaths.loc[row[0]][4:].index.tolist()[1:]
+        dates = [datetime.strptime(x, '%m/%d/%y') for x in dates]
+        parameters[LASTDAY] = "Yesterday" if len(dates) == 0 else dates[-1].strftime("%Y-%m-%d")
+
+        since_startdate = np.where(np.array(dates) >= datetime.strptime(startdate, '%Y-%m-%d'))
+        daily_deaths = np.array(daily_deaths)[since_startdate]
+        daily_cases = np.array(daily_cases)[since_startdate]
         xvalues = [x for x in range(- len(daily_deaths) + 1, 1)]
-        days = global_deaths.loc[row[0]][4:].index.tolist()
-        parameters[LASTDAY] = lastday = "Yesterday" if len(days) == 0 else days[-1]
-        # lastday = deaths_data.loc[row[0]][4:].index.tolist()[-1]
 
     # by now we have: location, alternatives, daily_cases, daily_deaths, xvalues, cumul_deaths, cumul_cases
 
@@ -264,7 +266,7 @@ def get_data(parameters):
     parameters[LOCATION] = location
 
     if True:
-        print("for", location, alternatives, "as of", lastday)
+        print("for", location, alternatives, "as of", parameters[LASTDAY])
         print("latest daily DEATHS:", daily_deaths[-1], "total DEATHS:", cumul_deaths[-1])
         print("latest daily CASES:", daily_cases[-1], "total CASES:", cumul_cases[-1])
 
