@@ -36,7 +36,11 @@ STATE = 'state'
 DEATHS = 'deaths'
 CASES = 'cases'
 DATE = 'date'
+FAMILY = 'family'
+SERIF = 'serif'
+
 LASTDAY = 'last-day'
+STARTDATE = 'start-date'
 
 COUNTRY_REGION = 'Country/Region'
 PROVINCE_STATE = 'Province/State'
@@ -148,6 +152,7 @@ def get_data(parameters):
     global States, Countries
 
     location = parameters[LOCATION]
+    startdate = parameters.get(STARTDATE, '2020-03-15')
 
     if location in States:   # US States
 
@@ -163,15 +168,14 @@ def get_data(parameters):
         dates = df[rows][DATE].tolist()
         parameters[LASTDAY] = lastday = dates[-1]
 
-        # print(dates[29], np.where(np.array(dates) >= '2020-03-01'))
-        since_March_1 =  np.where(np.array(dates) >= '2020-03-01')
-        cumul_deaths = np.array(cumul_deaths)[since_March_1]
-        cumul_cases = np.array(cumul_cases)[since_March_1]
-        dates = np.array(dates)[since_March_1]
+        since_March_15 =  np.where(np.array(dates) >= '2020-03-15')
+        cumul_deaths = np.array(cumul_deaths)[since_March_15]
+        cumul_cases = np.array(cumul_cases)[since_March_15]
+        dates = np.array(dates)[since_March_15]
+        print('starting at', dates[0])
 
         daily_cases = [0] + list(np.array(cumul_cases)[1:] - np.array(cumul_cases)[:-1])
         daily_deaths = [0] + list(np.array(cumul_deaths)[1:] - np.array(cumul_deaths)[:-1])
-        # xvalues = [x for x in range(len(daily_deaths))]
         xvalues = [x for x in range(- len(daily_deaths) + 1, 1)]
 
     else:   # Country or Province or Region outside of US
@@ -292,25 +296,24 @@ def plot_data(cases, deaths, xvalues, parameters):
     if location in PlotExceptions.keys():
         location = PlotExceptions[location]
 
-    font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal', 'size': 16 }
-    font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal' }
+    font = {'color': 'darkred', 'weight': 'normal', 'size': 16 }
 
     if parameters[XKCD]:
         plt.xkcd()
-        # font['family'] = 'humor sans'
-        font.pop('family', None)
+    else:
+        font[FAMILY] = SERIF
 
     fig, ax = plt.subplots()
 
     ax.bar(xvalues, cases, label='Daily Cases', width=0.5, color='c')
     ax.bar(xvalues, deaths, label='Daily Deaths', width=0.5, color='r')
-    ax.plot(xvalues, rolling_cases, label=str(rolling_window) + '-Day Cases Rolling Average', color='c')
-    ax.plot(xvalues, rolling_deaths, label=str(rolling_window) + '-Day Deaths Rolling Average', color='r')
+    ax.plot(xvalues, rolling_cases, label='Cases ' + str(rolling_window) + '-Day Rolling Average', color='c')
+    ax.plot(xvalues, rolling_deaths, label='Deaths ' + str(rolling_window) + '-Day Rolling Average', color='r')
 
     ax.grid()
     ax.legend(title='Where:')
     plt.ylabel('Number of Cases', fontdict=font)
-    plt.xlabel('Days Before Yesterday', fontdict=font)
+    plt.xlabel('Days Before ' + parameters[LASTDAY], fontdict=font)
     plt.title(location + ' COVID-19 Cases', fontdict=font)
     plt.subplots_adjust(left=0.15)
 
