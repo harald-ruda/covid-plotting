@@ -309,8 +309,8 @@ def plot_data(cases, deaths, xvalues, parameters):
 
     ax.bar(xvalues, cases, label='Daily Cases', width=0.5, color='c')
     ax.bar(xvalues, deaths, label='Daily Deaths', width=0.5, color='r')
-    ax.plot(xvalues, rolling_cases, label='Cases ' + str(rolling_window) + '-Day Rolling Average', color='c')
-    ax.plot(xvalues, rolling_deaths, label='Deaths ' + str(rolling_window) + '-Day Rolling Average', color='r')
+    ax.plot(xvalues, rolling_cases, label='Cases ' + str(rolling_window) + '-Day Average', color='c')
+    ax.plot(xvalues, rolling_deaths, label='Deaths ' + str(rolling_window) + '-Day Average', color='r')
 
     ax.grid()
     ax.legend(title='Where:')

@@ -1,4 +1,5 @@
 *.pdf
 *.csv
+*.rtf
 COVID-19/
 __pycache__/
