@@ -1,6 +1,9 @@
 
 plot
 - select when to start curves (default now is Ides of March)
+- fix US-NY when size mismatch
+- generalize US-NY
+- add data caching
 
 query-demo.website/covid:
 - create

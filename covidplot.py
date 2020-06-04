@@ -135,6 +135,7 @@ West Bank and Gaza -> Palestine, State of
 
 PlotExceptions = { 'Korea, South': 'South Korea',
                    'Taiwan*': 'Taiwan',
+                   'US-NY': "US except for NY",
                  }
 
 
@@ -152,8 +153,19 @@ def get_data(parameters):
     """
     global States, Countries
 
+    alternatives = []
     location = parameters[LOCATION]
     startdate = parameters.get(STARTDATE, '2020-03-15')
+
+    if location == 'US-NY':
+
+        parameters.update({LOCATION: 'US'})
+        us_cases, us_deaths, us_xvalues = get_data(parameters)
+        parameters.update({LOCATION: 'NY'})
+        ny_cases, ny_deaths, ny_xvalues = get_data(parameters)
+        parameters.update({LOCATION: location})
+
+        return us_cases - ny_cases, us_deaths - ny_deaths, us_xvalues
 
     if location in States:   # US States
 
@@ -184,7 +196,6 @@ def get_data(parameters):
         global_deaths = pd.read_csv(GlobalDataLocation + DeathsFile)
         country_list = global_deaths[COUNTRY_REGION].tolist()
         province_list = global_deaths[PROVINCE_STATE].tolist()
-        alternatives = []
 
         if location in country_list:
 
