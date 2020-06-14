@@ -46,6 +46,8 @@ STARTDATE = 'start-date'
 COUNTRY_REGION = 'Country/Region'
 PROVINCE_STATE = 'Province/State'
 
+YLIMIT = 'y-limit'
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # DATA SOURCES - always get the latest available data
@@ -330,6 +332,12 @@ def plot_data(cases, deaths, xvalues, parameters):
     plt.title(location + ' COVID-19 Cases', fontdict=font)
     plt.subplots_adjust(left=0.15)
 
+    if YLIMIT in parameters:
+        topval = float(parameters[YLIMIT])
+        plt.ylim(bottom=0, top=topval)
+    else:
+        plt.ylim(bottom=0)
+
     if parameters[PDF]:
         fig.savefig(location + '-covid.pdf')
 
@@ -355,6 +363,14 @@ def process_arguments(argv):
     for item in [PDF, XKCD, INFO]:
         if item in argv:
             argv.remove(item)
+
+    for item in [YLIMIT]:
+        if item in argv[:-1]:
+            num = argv.index(item)
+            val = argv[num + 1]
+            del argv[num+1]
+            del argv[num]
+            parameters[YLIMIT] = val
 
     parameters[LOCATION] = 'Massachusetts' if len(argv) == 0 else ' '.join(argv)
 
