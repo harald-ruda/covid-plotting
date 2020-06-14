@@ -332,9 +332,8 @@ def plot_data(cases, deaths, xvalues, parameters):
     plt.title(location + ' COVID-19 Cases', fontdict=font)
     plt.subplots_adjust(left=0.15)
 
-    if YLIMIT in parameters:
-        topval = float(parameters[YLIMIT])
-        plt.ylim(bottom=0, top=topval)
+    if YLIMIT in parameters and is_float(parameters[YLIMIT]):
+        plt.ylim(bottom=0, top=float(parameters[YLIMIT]))
     else:
         plt.ylim(bottom=0)
 
@@ -342,6 +341,14 @@ def plot_data(cases, deaths, xvalues, parameters):
         fig.savefig(location + '-covid.pdf')
 
     plt.show()   # display plot on screen
+
+
+def is_float(value):
+    try:
+        float(value)
+        return True
+    except:
+        return False
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
