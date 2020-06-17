@@ -7,6 +7,8 @@
 
 import sys
 import math
+import matplotlib
+matplotlib.use("Qt5Agg")
 
 import numpy as np
 import pandas as pd
@@ -329,17 +331,24 @@ def plot_data(cases, deaths, xvalues, parameters):
     ax.legend(title='Where:')
     plt.ylabel('Number of Cases', fontdict=font)
     plt.xlabel('Days Before ' + parameters[LASTDAY], fontdict=font)
-    plt.title(location + ' COVID-19 Cases', fontdict=font)
+    plt.title(location + ': COVID-19 Cases, Deaths', fontdict=font)
     plt.subplots_adjust(left=0.15)
+    plt.tight_layout(pad=1)   # minimal padding
 
-    if YLIMIT in parameters and is_float(parameters[YLIMIT]):
-        plt.ylim(bottom=0, top=float(parameters[YLIMIT]))
+    if YLIMIT in parameters:
+        if is_float(parameters[YLIMIT]):
+            plt.ylim(bottom=0, top=float(parameters[YLIMIT]))
+        elif parameters[YLIMIT] == 'deaths':
+            plt.ylim(bottom=0, top=max(deaths))
+        else:
+            plt.ylim(bottom=0)
     else:
         plt.ylim(bottom=0)
 
     if parameters[PDF]:
         fig.savefig(location + '-covid.pdf')
 
+    plt.get_current_fig_manager().full_screen_toggle()   # Make full screen, need to use Qt5
     plt.show()   # display plot on screen
 
 
