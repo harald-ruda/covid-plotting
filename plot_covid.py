@@ -85,6 +85,7 @@ LocationExceptions = { 'UK': 'United Kingdom',
                        'South-Korea': 'Korea, South',
                        'South Korea': 'Korea, South',
                        'Zaandam': 'MS Zandaam', 
+                       'Holland': 'Netherlands',
                      }
 
 
@@ -277,6 +278,7 @@ def get_data(parameters):
     # by now we have: location, alternatives, daily_cases, daily_deaths, xvalues, cumul_deaths, cumul_cases
 
     alternatives = [item for item in alternatives if item != location]
+    alternatives = list(np.unique(alternatives))
     alternatives = '(' + ', '.join(alternatives) + ')' if len(alternatives) > 0 else ''
     if False and len(alternatives) == 0:
         print(parameters[LOCATION], '->', location, '->', PlotExceptions[location] if location in PlotExceptions.keys() else location, "|", alternatives, cumul_deaths[-1], "dead")
@@ -284,6 +286,7 @@ def get_data(parameters):
 
     if True:
         print("for", location, alternatives, "as of", parameters[LASTDAY])
+        print()
         print("latest daily DEATHS:", daily_deaths[-1], "total DEATHS:", cumul_deaths[-1])
         print("latest daily CASES:", daily_cases[-1], "total CASES:", cumul_cases[-1])
 
@@ -306,17 +309,33 @@ def covid_curve(x, offset, top, curve, slope):
     return top / (1.0 + np.exp(- xx / curve) + np.exp(xx / slope))
 
 
+def covid_predict(curve_type, popt, past=180, future=180):
+    print()
+    c, s = popt[2:4]
+    peak = int(np.log(s / c) * s * c / (s + c) + popt[0])
+    # print('model for', curve_type, popt)
+    print('Model for', curve_type + ':', 'peak was ' + str(-peak) + ' days ago.' if peak < 0 else 'peak will come ' + str(peak) + ' days from now.')
+    sofar = sum(covid_curve(range(-past, 0), *popt))
+    coming = sum(covid_curve(range(1, future + 1), *popt))
+    print('Estimating', int(sofar), curve_type, 'so far, with', int(coming), 'more to come. Predicting a total of', int(sofar + coming), curve_type + '.')
+
+
 def plot_data(cases, deaths, xvalues, parameters):
     """
     """
+    models = False
     rolling_window = 7
     rolling_cases = rolling_mean(cases, rolling_window)
     rolling_deaths = rolling_mean(deaths, rolling_window)
 
-    cases_popt, _ = curve_fit(covid_curve, xvalues, cases, p0=(-70, 2*max(rolling_cases), 5, 50))
-    print(cases_popt)
-    deaths_popt, _ = curve_fit(covid_curve, xvalues, deaths, p0=(-60, 2*max(rolling_deaths), 5, 50))
-    print(deaths_popt)
+    try:
+        cases_popt, _ = curve_fit(covid_curve, xvalues, cases, p0=(-70, 2*max(rolling_cases), 5, 50))
+        covid_predict('cases', cases_popt, past=len(xvalues))
+        deaths_popt, _ = curve_fit(covid_curve, xvalues, deaths, p0=(-60, 2*max(rolling_deaths), 5, 50))
+        covid_predict('deaths', deaths_popt, past=len(xvalues))
+        models = True
+    except RuntimeError:
+        print("No models due to weird data.")
 
     cases = [max(0, value) for value in cases]
     deaths = [max(0, value) for value in deaths]
@@ -339,8 +358,9 @@ def plot_data(cases, deaths, xvalues, parameters):
     ax.plot(xvalues, rolling_cases, label='Cases ' + str(rolling_window) + '-Day Average', color='c')
     ax.plot(xvalues, rolling_deaths, label='Deaths ' + str(rolling_window) + '-Day Average', color='r')
 
-    ax.plot(xvalues, covid_curve(np.array(xvalues), *cases_popt), color='g')
-    ax.plot(xvalues, covid_curve(np.array(xvalues), *deaths_popt), color='g')
+    if models:
+        ax.plot(xvalues, covid_curve(np.array(xvalues), *cases_popt), color='g')
+        ax.plot(xvalues, covid_curve(np.array(xvalues), *deaths_popt), color='g')
 
     ax.grid()
     ax.legend(title='Where:')
@@ -395,7 +415,7 @@ def process_arguments(argv):
         if item in argv:
             argv.remove(item)
 
-    for item in [YLIMIT, 'ylim']:
+    for item in [YLIMIT, 'ylimit', 'ylim', 'yscale', 'ymax']:
         if item == argv[-1]:
             num = argv.index(item)
             del argv[num]
