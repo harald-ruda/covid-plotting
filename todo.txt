@@ -4,6 +4,12 @@ plot
 - fix US-NY when size mismatch
 - generalize US-NY
 - add data caching
+- add "World", "Europe", "New England", "Northeast", "South", "Clinton", "Trump"
+- for "States" make small multiple plots of all US states
+
+modeling
+- estimate R0?
+- create a 21-day model to estimate lethality
 
 query-demo.website/covid:
 - create

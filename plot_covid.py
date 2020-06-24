@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from scipy.optimize import curve_fit
+
 # https://stackoverflow.com/questions/41245330/check-if-a-country-entered-is-one-of-the-countries-of-the-world
 
 from iso3166 import countries as Countries
@@ -299,12 +301,22 @@ def rolling_mean(x, N):
     return (sum[N:] - sum[:-N]) / float(N)
 
 
+def covid_curve(x, offset, top, curve, slope):
+    xx = x - offset
+    return top / (1.0 + np.exp(- xx / curve) + np.exp(xx / slope))
+
+
 def plot_data(cases, deaths, xvalues, parameters):
     """
     """
     rolling_window = 7
     rolling_cases = rolling_mean(cases, rolling_window)
     rolling_deaths = rolling_mean(deaths, rolling_window)
+
+    cases_popt, _ = curve_fit(covid_curve, xvalues, cases, p0=(-70, 2*max(rolling_cases), 5, 50))
+    print(cases_popt)
+    deaths_popt, _ = curve_fit(covid_curve, xvalues, deaths, p0=(-60, 2*max(rolling_deaths), 5, 50))
+    print(deaths_popt)
 
     cases = [max(0, value) for value in cases]
     deaths = [max(0, value) for value in deaths]
@@ -326,6 +338,9 @@ def plot_data(cases, deaths, xvalues, parameters):
     ax.bar(xvalues, deaths, label='Daily Deaths', width=0.5, color='r')
     ax.plot(xvalues, rolling_cases, label='Cases ' + str(rolling_window) + '-Day Average', color='c')
     ax.plot(xvalues, rolling_deaths, label='Deaths ' + str(rolling_window) + '-Day Average', color='r')
+
+    ax.plot(xvalues, covid_curve(np.array(xvalues), *cases_popt), color='g')
+    ax.plot(xvalues, covid_curve(np.array(xvalues), *deaths_popt), color='g')
 
     ax.grid()
     ax.legend(title='Where:')
@@ -380,7 +395,11 @@ def process_arguments(argv):
         if item in argv:
             argv.remove(item)
 
-    for item in [YLIMIT]:
+    for item in [YLIMIT, 'ylim']:
+        if item == argv[-1]:
+            num = argv.index(item)
+            del argv[num]
+            parameters[YLIMIT] = 'deaths'
         if item in argv[:-1]:
             num = argv.index(item)
             val = argv[num + 1]
