@@ -314,7 +314,7 @@ def covid_predict(curve_type, popt, past=180, future=180):
     c, s = popt[2:4]
     peak = int(np.log(s / c) * s * c / (s + c) + popt[0])
     # print('model for', curve_type, popt)
-    print('Model for', curve_type + ':', 'peak was ' + str(-peak) + ' days ago.' if peak < 0 else 'peak will come ' + str(peak) + ' days from now.')
+    print('Model for', curve_type.upper() + ':', 'peak was ' + str(-peak) + ' days ago.' if peak < 0 else 'peak will come ' + str(peak) + ' days from now.')
     sofar = sum(covid_curve(range(-past, 0), *popt))
     coming = sum(covid_curve(range(1, future + 1), *popt))
     print('Estimating', int(sofar), curve_type, 'so far, with', int(coming), 'more to come. Predicting a total of', int(sofar + coming), curve_type + '.')
@@ -335,6 +335,7 @@ def plot_data(cases, deaths, xvalues, parameters):
         covid_predict('deaths', deaths_popt, past=len(xvalues))
         models = True
     except RuntimeError:
+        print()
         print("No models due to weird data.")
 
     cases = [max(0, value) for value in cases]
@@ -361,6 +362,18 @@ def plot_data(cases, deaths, xvalues, parameters):
     if models:
         ax.plot(xvalues, covid_curve(np.array(xvalues), *cases_popt), color='g')
         ax.plot(xvalues, covid_curve(np.array(xvalues), *deaths_popt), color='g')
+        print(location, "has", '{:.2f}'.format(100 * deaths_popt[1] / cases_popt[1]), "% fatality rate, and the lag is", 
+              str(int(deaths_popt[0] - cases_popt[0])), "days.")
+
+        # plot cases given deaths
+        deaths_popt[1] *= 125  # one in 125 die
+        deaths_popt[0] -= 16   # die 21 days after infection, symptoms shw up after 5 days (21-5=16)
+        # ax.plot(xvalues, covid_curve(np.array(xvalues), *deaths_popt), color='b')
+
+        # plot deaths given cases
+        cases_popt[1] /= 125
+        cases_popt[0] += 16
+        # ax.plot(xvalues, covid_curve(np.array(xvalues), *cases_popt), color='b')
 
     ax.grid()
     ax.legend(title='Where:')
