@@ -362,8 +362,9 @@ def plot_data(cases, deaths, xvalues, parameters):
     if models:
         ax.plot(xvalues, covid_curve(np.array(xvalues), *cases_popt), color='g')
         ax.plot(xvalues, covid_curve(np.array(xvalues), *deaths_popt), color='g')
-        print(location, "has", '{:.2f}'.format(100 * deaths_popt[1] / cases_popt[1]), "% fatality rate, and the lag is", 
-              str(int(deaths_popt[0] - cases_popt[0])), "days.")
+        print()
+        print("{0} has a {1:.2f}% fatality rate, and the lag is {2:.0f} days.".
+              format(location, 100 * deaths_popt[1] / cases_popt[1], deaths_popt[0] - cases_popt[0])) 
 
         # plot cases given deaths
         deaths_popt[1] *= 125  # one in 125 die
