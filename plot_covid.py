@@ -312,7 +312,11 @@ def covid_curve(x, offset, top, curve, slope):
 def covid_predict(curve_type, popt, past=180, future=180):
     print()
     c, s = popt[2:4]
-    peak = int(np.log(s / c) * s * c / (s + c) + popt[0])
+    # print("c,s", c, s)
+    if c > 0 and s > 0:
+        peak = int(np.log(s / c) * s * c / (s + c) + popt[0])
+    else:
+        peak = popt[0]
     # print('model for', curve_type, popt)
     print('Model for', curve_type.upper() + ':', 'peak was ' + str(-peak) + ' days ago.' if peak < 0 else 'peak will come ' + str(peak) + ' days from now.')
     sofar = sum(covid_curve(range(-past, 0), *popt))
@@ -323,7 +327,8 @@ def covid_predict(curve_type, popt, past=180, future=180):
 def plot_data(cases, deaths, xvalues, parameters):
     """
     """
-    models = False
+    cases_model = False
+    deaths_model = False
     rolling_window = 7
     rolling_cases = rolling_mean(cases, rolling_window)
     rolling_deaths = rolling_mean(deaths, rolling_window)
@@ -331,12 +336,16 @@ def plot_data(cases, deaths, xvalues, parameters):
     try:
         cases_popt, _ = curve_fit(covid_curve, xvalues, cases, p0=(-70, 2*max(rolling_cases), 5, 50))
         covid_predict('cases', cases_popt, past=len(xvalues))
+        cases_model = True
+    except RuntimeError:
+        print("No cases-model due to weird data.")
+
+    try:
         deaths_popt, _ = curve_fit(covid_curve, xvalues, deaths, p0=(-60, 2*max(rolling_deaths), 5, 50))
         covid_predict('deaths', deaths_popt, past=len(xvalues))
-        models = True
+        deaths_model = True
     except RuntimeError:
-        print()
-        print("No models due to weird data.")
+        print("No deaths-model due to weird data.")
 
     cases = [max(0, value) for value in cases]
     deaths = [max(0, value) for value in deaths]
@@ -352,16 +361,19 @@ def plot_data(cases, deaths, xvalues, parameters):
     else:
         font[FAMILY] = SERIF
 
-    fig, ax = plt.subplots()
+    # fig, ax = plt.subplots(2, sharex=True)
+    fig, ax = plt.subplots(2, sharex=True, gridspec_kw={'hspace': 0.05})
 
-    ax.bar(xvalues, cases, label='Daily Cases', width=0.5, color='c')
-    ax.bar(xvalues, deaths, label='Daily Deaths', width=0.5, color='r')
-    ax.plot(xvalues, rolling_cases, label='Cases ' + str(rolling_window) + '-Day Average', color='c')
-    ax.plot(xvalues, rolling_deaths, label='Deaths ' + str(rolling_window) + '-Day Average', color='r')
+    ax[0].bar(xvalues, cases, label='Daily Cases', width=0.5, color='c')
+    ax[1].bar(xvalues, deaths, label='Daily Deaths', width=0.5, color='r')
+    ax[0].plot(xvalues, rolling_cases, label='Cases ' + str(rolling_window) + '-Day Average', color='c')
+    ax[1].plot(xvalues, rolling_deaths, label='Deaths ' + str(rolling_window) + '-Day Average', color='r')
 
-    if models:
-        ax.plot(xvalues, covid_curve(np.array(xvalues), *cases_popt), color='g')
-        ax.plot(xvalues, covid_curve(np.array(xvalues), *deaths_popt), color='g')
+    if cases_model:
+        ax[0].plot(xvalues, covid_curve(np.array(xvalues), *cases_popt), label='Cases Model', color='g')
+    if deaths_model:
+        ax[1].plot(xvalues, covid_curve(np.array(xvalues), *deaths_popt), label='Deaths Model', color='g')
+    if deaths_model and cases_model:
         print()
         print("{0} has a {1:.2f}% fatality rate, and the lag is {2:.0f} days.".
               format(location, 100 * deaths_popt[1] / cases_popt[1], deaths_popt[0] - cases_popt[0])) 
@@ -376,13 +388,19 @@ def plot_data(cases, deaths, xvalues, parameters):
         cases_popt[0] += 16
         # ax.plot(xvalues, covid_curve(np.array(xvalues), *cases_popt), color='b')
 
-    ax.grid()
-    ax.legend(title='Where:')
-    plt.ylabel('Number of Cases', fontdict=font)
+    ax[0].label_outer()
+    ax[0].grid()
+    ax[0].legend()
+    ax[1].grid()
+    ax[1].legend()
+
+    ax[0].set_ylabel('Number of Cases', fontdict=font)
+    ax[1].set_ylabel('Number of Deaths', fontdict=font)
     plt.xlabel('Days Before ' + parameters[LASTDAY], fontdict=font)
-    plt.title(location + ': COVID-19 Cases, Deaths', fontdict=font)
+    # plt.suptitle(location + ': COVID-19 Cases, Deaths', fontdict=font)
+    ax[0].set_title(location + ': COVID-19 Cases, Deaths', fontdict=font)
     plt.subplots_adjust(left=0.15)
-    plt.tight_layout(pad=1)   # minimal padding
+    # plt.tight_layout(pad=1)   # minimal padding
 
     if YLIMIT in parameters:
         if is_float(parameters[YLIMIT]):
