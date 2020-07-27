@@ -164,6 +164,9 @@ def get_data(parameters):
     location = parameters[LOCATION]
     startdate = parameters.get(STARTDATE, '2020-03-15')
 
+    if location.islower():
+        location = location.upper() if len(location) < 4 else location.capitalize()
+
     if location == 'US-NY':
 
         parameters.update({LOCATION: 'US'})
@@ -404,9 +407,9 @@ def plot_data(cases, deaths, xvalues, parameters):
 
     if YLIMIT in parameters:
         if is_float(parameters[YLIMIT]):
-            plt.ylim(bottom=0, top=float(parameters[YLIMIT]))
+            ax[0].set_ylim(bottom=0, top=float(parameters[YLIMIT]))
         elif parameters[YLIMIT] == 'deaths':
-            plt.ylim(bottom=0, top=max(deaths))
+            ax[0].set_ylim(bottom=0, top=max(deaths))
         else:
             plt.ylim(bottom=0)
     else:
