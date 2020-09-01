@@ -1,6 +1,7 @@
 
 plot
 - select when to start curves (default now is Ides of March)
+- also choose end-date? (default is latest data)
 - fix US-NY when size mismatch
 - generalize US-NY
 - add data caching

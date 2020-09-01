@@ -33,6 +33,7 @@ LOCATION = 'location'
 PDF = 'pdf'
 XKCD = 'xkcd'
 INFO = 'info'
+PLOT = 'plot'
 
 NAME = 'name'
 ABBREVIATION = 'abbreviation'
@@ -307,8 +308,8 @@ def rolling_mean(x, N):
     return (sum[N:] - sum[:-N]) / float(N)
 
 
-def covid_curve(x, offset, top, curve, slope):
-    xx = x - offset
+def covid_curve(x, offset, top, curve, slope, adjustment=0):
+    xx = x - offset - adjustment
     return top / (1.0 + np.exp(- xx / curve) + np.exp(xx / slope))
 
 
@@ -373,9 +374,9 @@ def plot_data(cases, deaths, xvalues, parameters):
     ax[1].plot(xvalues, rolling_deaths, label='Deaths ' + str(rolling_window) + '-Day Average', color='r')
 
     if cases_model:
-        ax[0].plot(xvalues, covid_curve(np.array(xvalues), *cases_popt), label='Cases Model', color='g')
+        ax[0].plot(xvalues, covid_curve(np.array(xvalues), adjustment=3.5, *cases_popt), label='Cases Model', color='g')
     if deaths_model:
-        ax[1].plot(xvalues, covid_curve(np.array(xvalues), *deaths_popt), label='Deaths Model', color='g')
+        ax[1].plot(xvalues, covid_curve(np.array(xvalues), adjustment=3.5, *deaths_popt), label='Deaths Model', color='g')
     if deaths_model and cases_model:
         print()
         print("{0} has a {1:.2f}% fatality rate, and the lag is {2:.0f} days.".
@@ -442,9 +443,16 @@ def process_arguments(argv):
     """
     parameters = {}
 
+    parameters[PLOT] = True
+
     parameters[PDF] = PDF in argv
     parameters[XKCD] = XKCD in argv
     parameters[INFO] = INFO in argv
+
+    for item in ['noplot', 'no-plot', 'info-only']:
+        if item in argv:
+            argv.remove(item)
+            parameters[PLOT] = False
 
     for item in [PDF, XKCD, INFO]:
         if item in argv:
@@ -517,7 +525,7 @@ if __name__ == "__main__":
 
     parameters = process_arguments(sys.argv[1:])
     cases, deaths, xvalues = get_data(parameters)
-    if not(cases is None):
+    if parameters[PLOT] and not(cases is None):
         plot_data(cases, deaths, xvalues, parameters)
 
 
